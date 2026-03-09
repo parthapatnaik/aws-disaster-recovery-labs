@@ -1,0 +1,10 @@
+db_password          = "ChangeMe123!"
+domain_name          = "creativeskillset.click"
+record_name          = "www"
+create_route53_record = true
+
+# Cost-conscious defaults are already set:
+# - ASG desired = 1
+# - RDS single-AZ
+# - NAT Gateway = 1
+# - Backups retained for 1 day
