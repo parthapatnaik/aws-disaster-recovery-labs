@@ -18,6 +18,15 @@ A hands-on architecture repository to demonstrate the four major AWS Disaster Re
 3. Warm Standby
 4. Active-Active (Multi-Region)
 
+## DR Strategy Comparison
+
+| Strategy | Cost | Complexity | RTO | RPO | Best For |
+|----------|------|------------|-----|-----|----------|
+| Backup & Restore | Low | Low | High | Medium to High | Non-critical applications |
+| Pilot Light | Medium | Medium | Medium | Medium | Important apps with moderate DR requirements |
+| Warm Standby | Medium to High | Medium to High | Low | Low | Business-critical workloads |
+| Active-Active | High | High | Very Low | Very Low | Mission-critical customer-facing systems |
+
 ## Why this project?
 
 One of the biggest misconceptions in cloud architecture is that Multi-AZ automatically means Disaster Recovery.
