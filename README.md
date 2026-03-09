@@ -1,57 +1,67 @@
-# aws-disaster-recovery-labs
-Hands-on AWS Disaster Recovery labs covering Backup &amp; Restore, Pilot Light, Warm Standby, and Active-Active strategies using manual steps, Terraform, and DR testing.
-
 # AWS Disaster Recovery Labs
-
-A hands-on architecture repository to demonstrate the four major AWS Disaster Recovery strategies using:
-
+A hands-on AWS project to demonstrate the **four major Disaster Recovery (DR) strategies** using:
 - Manual implementation steps
 - Terraform Infrastructure as Code
-- DR validation and failover testing
+- DR testing scenarios
 - Architecture diagrams
 - Real AWS screenshots
 
-## Strategies Covered
-
-1. Backup & Restore
-2. Pilot Light
-3. Warm Standby
+## DR Strategies Covered
+1. Backup & Restore  
+2. Pilot Light  
+3. Warm Standby  
 4. Active-Active (Multi-Region)
 
-## DR Strategy Comparison
-
-| Strategy | Cost | Complexity | RTO | RPO | Best For |
-|----------|------|------------|-----|-----|----------|
-| Backup & Restore | Low | Low | High | Medium to High | Non-critical applications |
-| Pilot Light | Medium | Medium | Medium | Medium | Important apps with moderate DR requirements |
-| Warm Standby | Medium to High | Medium to High | Low | Low | Business-critical workloads |
-| Active-Active | High | High | Very Low | Very Low | Mission-critical customer-facing systems |
-
 ## Why this project?
+One of the biggest misconceptions in cloud architecture is:
 
-## Why this repository matters
+**“If my application is Multi-AZ, I already have Disaster Recovery.”**
+That is not always true.
 
-Disaster Recovery is often discussed in theory, but many teams never test how recovery actually works in practice.
+Multi-AZ helps improve availability **within a single AWS Region**.  
+Disaster Recovery is about how systems recover when there is a **larger failure**, such as:
+- Regional outage
+- Major infrastructure issue
+- Data corruption
+- Application failure
+- Operational mistake
 
-This repository is intended to bridge that gap by showing:
-- how each DR strategy maps to business expectations
-- how RTO and RPO affect architecture decisions
-- how AWS services are used differently across strategies
-- how recovery should be validated through live testing, not only documentation
-
-This project is also part of a broader architecture knowledge-sharing journey, where real-world scenarios, design trade-offs, and implementation patterns will be published for the community.
+This repository is being built to show how AWS DR strategies are designed, implemented, and tested in real-world environments.
 
 ## What this repository will include
-
-- Business explanation of each strategy
+- Simple explanation of each DR strategy
 - RTO / RPO discussion
-- Architecture diagrams
-- Manual implementation steps
+- Manual AWS setup steps
 - Terraform code
 - Live DR test scenarios
-- Screenshots from actual implementation
+- Architecture diagrams
+- Real screenshots from implementation
+
+## DR Strategy Comparison
+| Strategy | Cost | Recovery Speed | Complexity | Best For |
+|----------|------|----------------|------------|----------|
+| Backup & Restore | Low | Slow | Low | Non-critical applications |
+| Pilot Light | Medium | Faster than Backup & Restore | Medium | Important applications |
+| Warm Standby | Medium to High | Fast | Medium to High | Business-critical workloads |
+| Active-Active | High | Very Fast | High | Mission-critical customer-facing systems |
+
+## Learning Goal
+The goal of this project is to understand:
+- how each DR strategy works
+- when each strategy should be used
+- how business RTO/RPO requirements affect architecture decisions
+- how DR should be tested, not just documented
+
+## Who this project is for
+This repository is useful for:
+- Cloud Architects
+- DevOps Engineers
+- SREs
+- AWS learners
+- Students preparing for interviews
+- Teams designing resilient cloud systems
 
 ## Author
 
-Partha Patnaik  
+**Partha Patnaik**  
 Principal Cloud Architect | AWS | Distributed Systems | Cloud Resilience
