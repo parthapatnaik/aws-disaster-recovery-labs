@@ -29,13 +29,17 @@ A hands-on architecture repository to demonstrate the four major AWS Disaster Re
 
 ## Why this project?
 
-One of the biggest misconceptions in cloud architecture is that Multi-AZ automatically means Disaster Recovery.
+## Why this repository matters
 
-Multi-AZ improves availability inside a region.
+Disaster Recovery is often discussed in theory, but many teams never test how recovery actually works in practice.
 
-Disaster Recovery is about how the system recovers when there is a larger failure such as regional disruption, major service impact, data corruption, or operational outage.
+This repository is intended to bridge that gap by showing:
+- how each DR strategy maps to business expectations
+- how RTO and RPO affect architecture decisions
+- how AWS services are used differently across strategies
+- how recovery should be validated through live testing, not only documentation
 
-This repository is being built to demonstrate how DR strategies are designed, tested, and explained in real-world AWS environments.
+This project is also part of a broader architecture knowledge-sharing journey, where real-world scenarios, design trade-offs, and implementation patterns will be published for the community.
 
 ## What this repository will include
 
