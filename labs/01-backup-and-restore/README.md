@@ -64,7 +64,6 @@ This lab will show:
 
 ## Next Steps
 Upcoming updates will include:
-
 - Manual implementation steps
 - Terraform deployment
 - Disaster recovery testing
