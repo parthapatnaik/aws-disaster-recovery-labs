@@ -454,14 +454,15 @@ resource "aws_launch_template" "app" {
   iam_instance_profile {
     name = aws_iam_instance_profile.ec2_profile.name
   }
-
   user_data = base64encode(templatefile("${path.module}/userdata.sh.tftpl", {
     app_name    = var.project_name
     environment = var.environment
     db_endpoint = aws_db_instance.app.address
+    db_name     = var.db_name
+    db_user     = var.db_username
+    db_password = var.db_password
     region      = "ap-south-1"
   }))
-
   tag_specifications {
     resource_type = "instance"
 
@@ -620,7 +621,6 @@ resource "aws_lb_listener" "https" {
 ########################################
 # AWS Backup
 ########################################
-
 resource "aws_backup_vault" "mumbai" {
   provider = aws.mumbai
   name     = "${local.name_prefix}-vault-mumbai"
@@ -635,7 +635,8 @@ resource "aws_backup_vault" "hyderabad" {
   name     = "${local.name_prefix}-vault-hyderabad"
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-vault-hyderabad"
+    Name          = "${local.name_prefix}-vault-hyderabad"
+    force_destroy = true
   })
 }
 

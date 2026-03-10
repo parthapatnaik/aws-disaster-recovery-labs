@@ -2,33 +2,75 @@
 set -eux
 
 dnf update -y
-dnf install -y nginx
+dnf install -y python3 python3-pip
 
-cat > /usr/share/nginx/html/index.html <<EOF
-<!DOCTYPE html>
-<html>
-<head>
-  <title>${app_name} - Backup & Restore Lab</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 40px; background: #f7f9fc; color: #222; }
-    .card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-    h1 { color: #0b5cab; }
-    p { line-height: 1.6; }
-    code { background: #eef3f8; padding: 2px 6px; border-radius: 4px; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>${app_name} - Backup & Restore Lab</h1>
-    <p><strong>Environment:</strong> ${environment}</p>
-    <p><strong>Primary Region:</strong> ${region}</p>
-    <p><strong>Hostname:</strong> $(hostname -f)</p>
-    <p><strong>Database Endpoint:</strong> ${db_endpoint}</p>
-    <p>This is a production-style <strong>Backup & Restore</strong> lab with ALB, Auto Scaling, private app tier, private DB tier, S3 backups, AWS Backup, Route 53, and cross-region backup copy to Hyderabad.</p>
-  </div>
-</body>
-</html>
+pip3 install flask pymysql
+
+mkdir -p /opt/app
+
+cat > /opt/app/app.py <<EOF
+from flask import Flask
+import pymysql
+
+app = Flask(__name__)
+
+DB_HOST = "${db_endpoint}"
+DB_NAME = "${db_name}"
+DB_USER = "${db_user}"
+DB_PASSWORD = "${db_password}"
+
+@app.route("/")
+def home():
+    return """
+    <html>
+      <head><title>${app_name} - Backup & Restore Lab</title></head>
+      <body style="font-family: Arial; margin: 40px;">
+        <h1>${app_name} - Backup & Restore Lab</h1>
+        <p><b>Environment:</b> ${environment}</p>
+        <p><b>Primary Region:</b> ${region}</p>
+        <p><b>Database Endpoint:</b> {}</p>
+        <p>Use <a href="/dbcheck">/dbcheck</a> to verify database connectivity.</p>
+      </body>
+    </html>
+    """.format(DB_HOST)
+
+@app.route("/dbcheck")
+def dbcheck():
+    try:
+        conn = pymysql.connect(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME,
+            connect_timeout=5
+        )
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT 1;")
+            result = cursor.fetchone()
+        conn.close()
+        return f"DB OK - Query Result: {result[0]}\n", 200
+    except Exception as e:
+        return f"DB CONNECTION FAILED: {str(e)}\n", 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=80)
 EOF
 
-systemctl enable nginx
-systemctl restart nginx
+cat > /etc/systemd/system/flaskapp.service <<EOF
+[Unit]
+Description=Flask App
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/app
+ExecStart=/usr/bin/python3 /opt/app/app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable flaskapp
+systemctl start flaskapp
