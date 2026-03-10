@@ -5,7 +5,7 @@ output "alb_dns_name" {
 
 output "application_url" {
   description = "Application URL"
-  value       = var.create_route53_record ? "http://${var.record_name}.${var.domain_name}" : "http://${aws_lb.app.dns_name}"
+  value       = "https://${var.record_name}.${var.domain_name}"
 }
 
 output "backup_bucket_name" {

@@ -197,6 +197,14 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "HTTPS from internet"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -379,6 +387,24 @@ resource "aws_db_instance" "app" {
 }
 
 ########################################
+# ACM Certificate for HTTPS
+########################################
+
+resource "aws_acm_certificate" "cert" {
+  provider          = aws.mumbai
+  domain_name       = "${var.record_name}.${var.domain_name}"
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-cert"
+  })
+}
+
+########################################
 # ALB + App Tier
 ########################################
 
@@ -415,18 +441,6 @@ resource "aws_lb_target_group" "app" {
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-tg"
   })
-}
-
-resource "aws_lb_listener" "http" {
-  provider          = aws.mumbai
-  load_balancer_arn = aws_lb.app.arn
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.app.arn
-  }
 }
 
 resource "aws_launch_template" "app" {
@@ -516,6 +530,90 @@ resource "aws_autoscaling_group" "app" {
     key                 = "ManagedBy"
     value               = "Terraform"
     propagate_at_launch = true
+  }
+}
+
+########################################
+# Route 53 / Certificate Validation
+########################################
+
+data "aws_route53_zone" "main" {
+  count        = var.create_route53_record ? 1 : 0
+  provider     = aws.mumbai
+  name         = var.domain_name
+  private_zone = false
+}
+
+resource "aws_route53_record" "cert_validation" {
+  provider = aws.mumbai
+
+  for_each = var.create_route53_record ? {
+    for dvo in aws_acm_certificate.cert.domain_validation_options :
+    dvo.domain_name => {
+      name  = dvo.resource_record_name
+      type  = dvo.resource_record_type
+      value = dvo.resource_record_value
+    }
+  } : {}
+
+  zone_id = data.aws_route53_zone.main[0].zone_id
+  name    = each.value.name
+  type    = each.value.type
+  records = [each.value.value]
+  ttl     = 60
+}
+
+resource "aws_acm_certificate_validation" "cert" {
+  provider                = aws.mumbai
+  certificate_arn         = aws_acm_certificate.cert.arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+}
+
+resource "aws_route53_record" "www" {
+  count    = var.create_route53_record ? 1 : 0
+  provider = aws.mumbai
+  zone_id  = data.aws_route53_zone.main[0].zone_id
+  name     = "${var.record_name}.${var.domain_name}"
+  type     = "A"
+
+  alias {
+    name                   = aws_lb.app.dns_name
+    zone_id                = aws_lb.app.zone_id
+    evaluate_target_health = true
+  }
+}
+
+########################################
+# ALB Listeners
+########################################
+resource "aws_lb_listener" "http" {
+  provider          = aws.mumbai
+  load_balancer_arn = aws_lb.app.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+resource "aws_lb_listener" "https" {
+  provider          = aws.mumbai
+  load_balancer_arn = aws_lb.app.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+
+  certificate_arn = aws_acm_certificate_validation.cert.certificate_arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app.arn
   }
 }
 
@@ -616,30 +714,5 @@ resource "aws_backup_selection" "main" {
     type  = "STRINGEQUALS"
     key   = "Project"
     value = var.project_name
-  }
-}
-
-########################################
-# Route 53
-########################################
-
-data "aws_route53_zone" "main" {
-  count        = var.create_route53_record ? 1 : 0
-  provider     = aws.mumbai
-  name         = var.domain_name
-  private_zone = false
-}
-
-resource "aws_route53_record" "www" {
-  count    = var.create_route53_record ? 1 : 0
-  provider = aws.mumbai
-  zone_id  = data.aws_route53_zone.main[0].zone_id
-  name     = "${var.record_name}.${var.domain_name}"
-  type     = "A"
-
-  alias {
-    name                   = aws_lb.app.dns_name
-    zone_id                = aws_lb.app.zone_id
-    evaluate_target_health = true
   }
 }
